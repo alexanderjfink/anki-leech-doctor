@@ -1,0 +1,81 @@
+{
+  "providers": {
+    "catalog": {
+      "ollama": {
+        "kind": "openai_compat",
+        "label": "Ollama (local)",
+        "base_url": "http://localhost:11434/v1",
+        "model": "",
+        "api_key": ""
+      },
+      "vllm": {
+        "kind": "openai_compat",
+        "label": "vLLM (local)",
+        "base_url": "http://localhost:8000/v1",
+        "model": "",
+        "api_key": ""
+      },
+      "opencode": {
+        "kind": "openai_compat",
+        "label": "OpenCode (configurable)",
+        "base_url": "",
+        "model": "",
+        "api_key": ""
+      },
+      "openai": {
+        "kind": "openai_compat",
+        "label": "OpenAI",
+        "base_url": "https://api.openai.com/v1",
+        "model": "",
+        "api_key": ""
+      },
+      "claude": {
+        "kind": "anthropic",
+        "label": "Claude (Anthropic)",
+        "base_url": "https://api.anthropic.com",
+        "model": "",
+        "api_key": ""
+      }
+    },
+    "slots": {
+      "local": "vllm",
+      "cloud": "opencode"
+    }
+  },
+  "routing": {
+    "mode": "auto",
+    "on_ac": "local",
+    "on_battery": "cloud",
+    "on_desktop": "local",
+    "offline": "local",
+    "fallback": "cloud",
+    "probe_timeout_s": 1.5
+  },
+  "generation": {
+    "temperature": 0.2,
+    "max_tokens": 1200,
+    "timeout_s": 90,
+    "max_cards_per_batch": 50,
+    "concurrency": 3
+  },
+  "filters": {
+    "min_lapses": 3,
+    "include_suspended": false,
+    "include_leeches": true,
+    "ease_ceiling": null
+  },
+  "diagnosis": {
+    "wordy_front_threshold": 200,
+    "wall_of_text_threshold": 400,
+    "support_fields": ["Country info", "Note", "Characteristics", "Back Extra", "Note(s)"]
+  },
+  "ui": {
+    "field_max_height": 260,
+    "preview_max_height": 220,
+    "rich_edit": false
+  },
+  "apply": {
+    "confirm_apply_over": 25,
+    "keep_revert_log": true
+  }
+}
