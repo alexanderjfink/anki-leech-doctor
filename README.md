@@ -161,7 +161,8 @@ Shortcuts are scoped to the focused field.
 
 ## Troubleshooting
 
-- **`HTTP 403 … error code 1010`** — your gateway sits behind Cloudflare, which blocks non-browser user agents. Leech Doctor already sends a browser-style `User-Agent`; if a provider still blocks it, set a custom `user_agent` for that provider in the config.
+- **`HTTP 403 … error code 1010`** — your gateway sits behind Cloudflare, which blocks known-bot user agents. Leech Doctor sends a self-identifying `User-Agent` that passes it; if a provider still blocks you, set a browser-style `user_agent` for that provider in the config.
+- **`HTTP 400 … MissingSessionID` / `x-opencode-session`** — OpenCode Go requires a stable session id on **inference** requests. Leech Doctor sends one automatically for any `opencode.ai` endpoint (their `GET /models` deliberately omits it, which is why *Load models* works without it). If you override that provider's `headers`, don't drop it — or set your own `x-opencode-session` value.
 - **`The 'cloud' slot points to '…', which is not ready`** — the slot references a provider with no base URL (or, for Anthropic, no API key). Fix it in **Preferences → Routing**.
 - **Settings don't seem to apply** — Anki stores live add-on config in `meta.json`, not `config.json`. Always change settings through **Preferences**.
 - **Boxes too tall or too short** — adjust **field height** in the toolbar.

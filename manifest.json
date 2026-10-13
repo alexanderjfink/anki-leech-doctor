@@ -2,11 +2,11 @@
     "package": "leech_doctor",
     "name": "Leech Doctor",
     "author": "alexanderjfink",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "Diagnose and repair the Anki cards you keep forgetting. Ranks your most-struggled cards, proposes LLM rewrites, and applies edits safely with a revert log.",
     "homepage": "https://github.com/alexanderjfink/anki-leech-doctor",
     "ankiweb_id": "2142317474",
-    "mod": 1791852255,
+    "mod": 1791852574,
     "min_point_version": 60,
     "max_point_version": 9999,
     "conflicts": []

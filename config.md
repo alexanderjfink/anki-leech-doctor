@@ -6,6 +6,15 @@ Edit via **Tools → Leech Doctor: Preferences…**, or directly in the add-on's
 One entry per provider. Supported `kind`s: `openai_compat` (OpenAI, Ollama, vLLM, OpenCode, LM Studio…)
 and `anthropic` (Claude native Messages API). Each entry has `label`, `base_url`, `model`, `api_key`.
 
+Optional per-provider keys:
+- `headers` — a dict of extra request headers (editable in Preferences → Providers). Useful for
+  gateways that need a routing/session header.
+- `user_agent` — override the default self-identifying User-Agent.
+- `chat_path` / `models_path` — override the endpoint paths (default `/chat/completions`, `/models`).
+
+For any `opencode.ai` endpoint, an `x-opencode-session` header is added automatically on inference
+requests (OpenCode Go requires it); a value you set in `headers` takes precedence.
+
 ## `providers.slots`
 Two slots a card is sent through: `local` and `cloud`. Point each at a catalog key.
 Default: `local → ollama`, `cloud → claude`.

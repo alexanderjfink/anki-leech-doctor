@@ -119,6 +119,14 @@ class PreferencesDialog(QDialog):
             form.addRow("model", model_row)
             form.addRow("", status)
 
+            hdr = QPlainTextEdit()
+            hdr.setPlaceholderText("Extra request headers, one per line:\nHeader: value")
+            hdr.setMaximumHeight(58)
+            existing = entry.get("headers") or {}
+            if isinstance(existing, dict) and existing:
+                hdr.setPlainText("\n".join(f"{k}: {v}" for k, v in existing.items()))
+            form.addRow("headers", hdr)
+
             use_row = QWidget()
             uh = QHBoxLayout(use_row)
             uh.setContentsMargins(0, 0, 0, 0)
@@ -133,6 +141,7 @@ class PreferencesDialog(QDialog):
                 "kind": entry.get("kind", "openai_compat"),
                 "label": entry.get("label", key),
                 "url": e_url, "key": e_key, "combo": combo, "status": status,
+                "headers": hdr,
             }
             load.clicked.connect(self._make_loader(key))
             pl.addWidget(box)
@@ -267,6 +276,14 @@ class PreferencesDialog(QDialog):
             cfg["providers"]["catalog"][key]["base_url"] = row["url"].text().strip()
             cfg["providers"]["catalog"][key]["model"] = row["combo"].currentText().strip()
             cfg["providers"]["catalog"][key]["api_key"] = row["key"].text().strip()
+            hdrs = {}
+            for line in row["headers"].toPlainText().splitlines():
+                if ":" in line:
+                    k, v = line.split(":", 1)
+                    k, v = k.strip(), v.strip()
+                    if k and v:
+                        hdrs[k] = v
+            cfg["providers"]["catalog"][key]["headers"] = hdrs
         cfg["providers"]["slots"]["local"] = self.slot_local.currentText()
         cfg["providers"]["slots"]["cloud"] = self.slot_cloud.currentText()
         cfg["routing"]["mode"] = self.mode_combo.currentText()

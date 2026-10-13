@@ -1,5 +1,5 @@
 """OpenAI-compatible client (OpenAI, Ollama, vLLM, OpenCode, LM Studio, LiteLLM…)."""
-from .base import Provider, LLMError
+from .base import Provider, LLMError, is_opencode, opencode_session
 
 
 class OpenAICompatProvider(Provider):
@@ -9,6 +9,18 @@ class OpenAICompatProvider(Provider):
         h = {"Content-Type": "application/json"}
         if self.api_key:
             h["Authorization"] = f"Bearer {self.api_key}"
+        return h
+
+    def _chat_headers(self):
+        """Headers for an inference request.
+
+        OpenCode's relay requires a stable ``x-opencode-session`` id here (and only
+        here — their ``GET /models`` deliberately omits it). An explicit header in
+        the provider config always wins.
+        """
+        h = self._headers()
+        if is_opencode(self.base_url) and not self.has_header("x-opencode-session"):
+            h["x-opencode-session"] = opencode_session()
         return h
 
     def chat(self, system, user, temperature=0.2, max_tokens=1200, timeout=90):
@@ -24,7 +36,7 @@ class OpenAICompatProvider(Provider):
             "max_tokens": max_tokens,
             "stream": False,
         }
-        data = self._request(f"{self.base_url}{self.chat_path}", self._headers(), payload, timeout)
+        data = self._request(f"{self.base_url}{self.chat_path}", self._chat_headers(), payload, timeout)
         try:
             return data["choices"][0]["message"]["content"]
         except Exception:
