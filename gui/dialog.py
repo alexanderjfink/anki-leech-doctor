@@ -45,7 +45,13 @@ def _night_mode():
 
 
 class _AutoHeight:
-    """Mixin: grow a text/document widget to fit its content, scroll past `cap` px."""
+    """Mixin: grow a text/document widget to fit its content, scroll past `cap` px.
+
+    Measurement is *deferred to the event loop* (0 ms timer) so the document has
+    been laid out at its real width before we size to it. Measuring synchronously
+    inside contentsChanged/resizeEvent can read a stale height and leave a long
+    field only one line tall.
+    """
 
     def _init_auto(self, cap):
         self._cap = int(cap)
@@ -53,37 +59,59 @@ class _AutoHeight:
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.document().setDocumentMargin(3)
-        self.document().contentsChanged.connect(self._adjust)
-        self._adjust()
-        # the true wrap width isn't known until layout/show — re-measure once settled
-        QTimer.singleShot(0, self._adjust)
+        self._auto_timer = QTimer(self)
+        self._auto_timer.setSingleShot(True)
+        self._auto_timer.setInterval(0)
+        self._auto_timer.timeout.connect(self._adjust)
+        self.document().contentsChanged.connect(self._schedule)
+        self._schedule()
 
-    def _adjust(self):
-        w = self.viewport().width() or self.width()
-        if w <= 0:
-            return                          # not laid out yet; keep current height
+    def _schedule(self, *_):
+        self._auto_timer.start()
+
+    def _content_height(self, w):
+        """Height of the laid-out document at width `w`."""
         doc = self.document()
         doc.setTextWidth(w)
         try:
-            content_h = int(doc.documentLayout().documentSize().height())
+            layout = doc.documentLayout()
+            total, block, n = 0.0, doc.begin(), 0
+            while block.isValid() and n < 20000:
+                total += layout.blockBoundingRect(block).height()
+                block = block.next()
+                n += 1
+            if total > 0:
+                return total
         except Exception:
-            content_h = int(doc.size().height())
-        line = self.fontMetrics().height() + 10
-        h = min(max(content_h + 10, line), self._cap)
+            pass
+        try:
+            return doc.documentLayout().documentSize().height()
+        except Exception:
+            return doc.size().height()
+
+    def _adjust(self):
+        w = self.viewport().width()
+        if w <= 0:
+            return                          # not laid out yet
+        margins = 2 * self.document().documentMargin() + 6
+        h = int(self._content_height(w) + margins)
+        floor = self.fontMetrics().lineSpacing() + 8
+        h = min(max(h, floor), self._cap)
         if h != self.height():
             self.setFixedHeight(h)
+            self._schedule()                # re-check once the layout settles
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
-        self._adjust()
+        self._schedule()
 
     def showEvent(self, e):
         super().showEvent(e)
-        self._adjust()
+        self._schedule()
 
     def set_cap(self, cap):
         self._cap = int(cap)
-        self._adjust()
+        self._schedule()
 
 
 class AutoTextEdit(_AutoHeight, QPlainTextEdit):
