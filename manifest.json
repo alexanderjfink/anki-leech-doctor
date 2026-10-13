@@ -5,6 +5,7 @@
     "version": "0.1.0",
     "description": "Diagnose and repair the Anki cards you keep forgetting. Ranks your most-struggled cards, proposes LLM rewrites, and applies edits safely with a revert log.",
     "homepage": "https://github.com/alexanderjfink/anki-leech-doctor",
+    "ankiweb_id": "2142317474",
     "mod": 1750000000,
     "min_point_version": 60,
     "max_point_version": 9999,

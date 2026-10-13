@@ -16,7 +16,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 EXCLUDE_DIRS = {"__pycache__", ".git", "docs", ".github"}
 EXCLUDE_FILES = {
     "meta.json", "revert_log.json", "build.py",
-    ".gitignore", "README.md", "CHANGELOG.md", "LICENSE",
+    ".gitignore", "README.md", "CHANGELOG.md",
 }
 
 

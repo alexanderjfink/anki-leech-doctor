@@ -2,6 +2,8 @@
 
 > Diagnose and repair the Anki cards you keep forgetting — with an LLM.
 
+**AnkiWeb install code: [`2142317474`](https://ankiweb.net/shared/info/2142317474)**
+
 **Leech Doctor** finds the cards you fail most often, explains *why* they keep failing, asks a language model for a concrete rewrite, and lets you edit and apply those changes safely — per card, per deck, or across your whole collection.
 
 ---
@@ -64,6 +66,14 @@ Card text is sent **only** to the LLM provider you configure — nothing else le
 
 ## Install
 
+### From AnkiWeb — install code `2142317474`
+
+1. In Anki: **Tools → Add-ons → Get Add-ons…**
+2. Enter **`2142317474`** and click **OK**.
+3. Restart Anki.
+
+Add-on page: <https://ankiweb.net/shared/info/2142317474>
+
 ### From a `.ankiaddon` file
 
 1. Download `leech_doctor-<version>.ankiaddon` from **Releases** (or build it: `python3 build.py`).
@@ -82,7 +92,7 @@ Copy this folder into your Anki `addons21` directory:
 
 Then restart Anki.
 
-> **AnkiWeb install code:** once published to AnkiWeb, the add-on gets a numeric ID that users type into *Tools → Add-ons → Get Add-ons*. See [Publishing](#publishing-to-ankiweb).
+> The add-on is published on AnkiWeb with install code **`2142317474`**. See [Publishing](#publishing-to-ankiweb) for how updates are released.
 
 ---
 
@@ -187,4 +197,8 @@ Shortcuts are scoped to the focused field.
 
 ## License
 
-No license has been chosen yet. Until one is added, all rights are reserved.
+Licensed under the **Peer Production License** — a *copyfarleft* license created by John Magyar and Dmytri Kleiner, derived from Creative Commons BY-NC-SA 3.0. See [LICENSE](LICENSE) for the full text.
+
+In short: you may use, share and adapt this work freely for **non-commercial** purposes, provided you **attribute** it and **share alike**. Commercial use is permitted **only** by worker-owned businesses or worker-owned collectives that distribute all financial gain among their worker-owners. Commercial use by privately owned, profit-seeking businesses is **not** permitted.
+
+> The Peer Production License is not currently registered with SPDX.
