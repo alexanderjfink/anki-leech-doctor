@@ -187,6 +187,18 @@ Shortcuts are scoped to the focused field.
 
 ---
 
+## Theming
+
+Leech Doctor follows the app's colours instead of hard-coding its own.
+
+- **With Onigiri installed**, it reads Onigiri's **live palette** (its `colors.light` / `colors.dark` tokens) and adopts the same background, surface, text, and **accent** colours — including Onigiri's own light/dark choice. Catppuccin, Dracula, Rosé Pine, Nord, Solarized and custom Onigiri themes all work, because the palette is read from Onigiri rather than reimplemented.
+- **Otherwise** it uses Anki's Qt palette, so it tracks Anki's light/dark mode.
+- **Or** set explicit colours under **Preferences → Theme → custom**.
+
+The whole window palette is applied through Qt's palette (not a stylesheet), so buttons, trees, text fields and scrollbars inherit it and nothing fights Anki's or Onigiri's own styling. Accent-derived tints are used for the diagnosis banner, the lapses chip, and LLM-proposal labels.
+
+**Preferences → Theme → Show resolved theme** reports exactly which source was used and the resolved colours.
+
 ## Roadmap
 
 - Rendered card preview (question/answer with the note's CSS)

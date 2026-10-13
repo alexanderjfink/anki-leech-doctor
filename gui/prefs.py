@@ -43,6 +43,7 @@ class PreferencesDialog(QDialog):
         tabs.addTab(self._scroll(self._routing_tab(cat)), "Routing")
         tabs.addTab(self._scroll(self._generation_tab()), "Generation")
         tabs.addTab(self._scroll(self._filters_tab()), "Filters & Apply")
+        tabs.addTab(self._scroll(self._theme_tab()), "Theme")
 
         btns = QHBoxLayout()
         test = QPushButton("Test connection")
@@ -289,6 +290,18 @@ class PreferencesDialog(QDialog):
             "confirm_apply_over": int(self.confirm_over.value()),
             "keep_revert_log": bool(self.keep_log.isChecked()),
         })
+        dk = self.theme_dark.currentText()
+        cfg.setdefault("ui", {})
+        cfg["ui"]["theme"] = {
+            "mode": self.theme_mode.currentText(),
+            "dark": None if dk == "auto" else (dk == "dark"),
+            "accent": self.theme_edits["accent"].text().strip(),
+            "bg": self.theme_edits["bg"].text().strip(),
+            "panel": self.theme_edits["panel"].text().strip(),
+            "fg": self.theme_edits["fg"].text().strip(),
+            "fg_dim": self.theme_edits["fg_dim"].text().strip(),
+            "border": self.theme_edits["border"].text().strip(),
+        }
         return cfg
 
     def _use_slot(self, slot, key):
@@ -311,6 +324,52 @@ class PreferencesDialog(QDialog):
             f"<b>local</b> → {desc(self.slot_local.currentText())}<br>"
             f"<b>cloud</b> → {desc(self.slot_cloud.currentText())}"
         )
+
+    # ------------------------------------------------------------ Theme tab
+    def _theme_tab(self):
+        tw = QWidget()
+        form = _grow(QFormLayout(tw))
+        th = (self.cfg.get("ui", {}) or {}).get("theme", {}) or {}
+
+        self.theme_mode = _wide(QComboBox(), 200)
+        self.theme_mode.addItems(["auto", "onigiri", "anki", "custom"])
+        self.theme_mode.setCurrentText(str(th.get("mode", "auto")))
+        form.addRow("mode", self.theme_mode)
+
+        note = QLabel(
+            "<b>auto</b> / <b>onigiri</b> follow Onigiri's active palette when it is installed "
+            "(reading its own light/dark choice, else Anki's). <b>anki</b> uses Anki's Qt colours. "
+            "<b>custom</b> uses the fields below."
+        )
+        note.setWordWrap(True)
+        form.addRow("", note)
+
+        self.theme_dark = _wide(QComboBox(), 200)
+        self.theme_dark.addItems(["auto", "light", "dark"])
+        d = th.get("dark")
+        self.theme_dark.setCurrentText("auto" if d is None else ("dark" if d else "light"))
+        form.addRow("custom: mode", self.theme_dark)
+
+        self.theme_edits = {}
+        for key, label in (("accent", "accent"), ("bg", "background"),
+                           ("panel", "panel"), ("fg", "text"),
+                           ("fg_dim", "muted text"), ("border", "border")):
+            e = _wide(QLineEdit(str(th.get(key, "") or "")), 200)
+            e.setPlaceholderText("#rrggbb")
+            self.theme_edits[key] = e
+            form.addRow(f"custom: {label}", e)
+
+        show = QPushButton("Show resolved theme")
+        show.clicked.connect(self._show_theme)
+        form.addRow("", show)
+        return tw
+
+    def _show_theme(self):
+        from .theme import resolve as resolve_theme
+        try:
+            showInfo(resolve_theme(self._gather()).describe())
+        except Exception as e:
+            showInfo(f"Could not resolve theme: {e}")
 
     def _test(self):
         cfg = self._gather()

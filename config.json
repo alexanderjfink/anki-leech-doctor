@@ -72,7 +72,17 @@
   "ui": {
     "field_max_height": 260,
     "preview_max_height": 220,
-    "rich_edit": false
+    "rich_edit": false,
+    "theme": {
+      "mode": "auto",
+      "dark": null,
+      "accent": "",
+      "bg": "",
+      "panel": "",
+      "fg": "",
+      "fg_dim": "",
+      "border": ""
+    }
   },
   "apply": {
     "confirm_apply_over": 25,

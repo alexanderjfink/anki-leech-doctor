@@ -14,6 +14,7 @@ from ..engine import apply as A
 from ..engine.text import sanitize_qt_html, next_cloze_number, cloze_inner
 from ..proposals import generate as G
 from ..providers import pick_provider, route_info, resolve, is_configured, LLMError
+from .theme import resolve as resolve_theme
 
 PROV_MODES = ["Auto", "Local", "Cloud"]
 
@@ -28,20 +29,6 @@ def _clear_layout(layout):
             ch = item.layout()
             if ch is not None:
                 _clear_layout(ch)
-
-
-def _night_mode():
-    try:
-        from aqt.theme import theme_manager
-        nm = getattr(theme_manager, "night_mode", None)
-        if isinstance(nm, bool):
-            return nm
-        get = getattr(theme_manager, "get_night_mode", None)
-        if callable(get):
-            return bool(get())
-    except Exception:
-        pass
-    return False
 
 
 class _AutoHeight:
@@ -174,9 +161,11 @@ class LeechDoctorDialog(QDialog):
         self.setWindowTitle("Leech Doctor")
         self.setMinimumSize(680, 460)
         self.cfg = get_config()
-        self._night = _night_mode()
-        self._amber_text = "#FFD966" if self._night else "#7A5B00"
-        self._red_text = "#FF9A9A" if self._night else "#B00020"
+        self.theme = resolve_theme(self.cfg)
+        self._night = self.theme.dark
+        self._amber_text = self.theme.ink
+        self._red_text = self.theme.accent
+        self._apply_palette()
         self.rows = []
         self.notes = []
         self.proposals = {}
@@ -221,6 +210,35 @@ class LeechDoctorDialog(QDialog):
         h = max(self.minimumHeight(), min(want_h, int(geo.height() * 0.92)))
         self.resize(w, h)
         self.move(geo.x() + (geo.width() - w) // 2, geo.y() + (geo.height() - h) // 2)
+
+    # ------------------------------------------------------------- theming
+    def _apply_palette(self):
+        """Adopt the resolved theme's palette so the window matches the app.
+
+        Using QPalette (rather than a stylesheet) means children inherit the
+        colours naturally and we don't fight Anki's or Onigiri's own styling.
+        """
+        try:
+            from aqt.qt import QPalette, QColor
+            t = self.theme
+            pal = self.palette()
+            for role, col in (
+                (QPalette.ColorRole.Window, t.paper),
+                (QPalette.ColorRole.WindowText, t.ink),
+                (QPalette.ColorRole.Base, t.panel),
+                (QPalette.ColorRole.AlternateBase, t.paper),
+                (QPalette.ColorRole.Text, t.ink),
+                (QPalette.ColorRole.Button, t.panel),
+                (QPalette.ColorRole.ButtonText, t.ink),
+                (QPalette.ColorRole.ToolTipBase, t.panel),
+                (QPalette.ColorRole.ToolTipText, t.ink),
+                (QPalette.ColorRole.Highlight, t.accent),
+                (QPalette.ColorRole.HighlightedText, t.on(t.accent)),
+            ):
+                pal.setColor(role, QColor(col))
+            self.setPalette(pal)
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------ UI
     def _build_ui(self):
@@ -355,7 +373,7 @@ class LeechDoctorDialog(QDialog):
             log_n = A.log_size()
         except Exception:
             log_n = 0
-        warn = "" if ready else " <span style='color:#c00'>· NOT CONFIGURED (Preferences → Routing)</span>"
+        warn = "" if ready else f" <span style='color:{self.theme.danger}'>· NOT CONFIGURED (Preferences → Routing)</span>"
         self.status.setText(
             f"Provider: <b>{slot}</b> → {label} · {model} — {reason}{warn}"
             f"   ·   revert log: {log_n} change(s)"
@@ -390,6 +408,7 @@ class LeechDoctorDialog(QDialog):
                 pass
 
     def _stat_chip(self, value, caption, tooltip, accent=False):
+        t = self.theme
         w = QWidget()
         w.setObjectName("statChip")
         lay = QVBoxLayout(w)
@@ -399,30 +418,27 @@ class LeechDoctorDialog(QDialog):
         f = big.font(); f.setPointSize(f.pointSize() + 6); f.setBold(True)
         big.setFont(f)
         big.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        if accent:
-            big.setStyleSheet(f"color: {self._red_text};")
+        big.setStyleSheet(f"color: {t.accent if accent else t.ink};")
         cap = QLabel(caption)
         cf = cap.font(); cf.setPointSize(max(8, cf.pointSize() - 1))
         cap.setFont(cf)
         cap.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        cap.setStyleSheet("color: gray;")
+        cap.setStyleSheet(f"color: {t.ink_dim};")
         lay.addWidget(big)
         lay.addWidget(cap)
+        bg = t.tint(t.accent, 0.18) if accent else t.surface()
+        bd = t.tint(t.accent, 0.55) if accent else t.line()
         w.setStyleSheet(
-            "#statChip { background-color: rgba(128,128,128,30); "
-            "border: 1px solid rgba(128,128,128,70); border-radius: 6px; }"
+            f"#statChip {{ background-color: {bg}; border: 1px solid {bd}; border-radius: 6px; }}"
         )
-        if accent:
-            w.setStyleSheet(
-                "#statChip { background-color: rgba(220,80,80,45); "
-                "border: 1px solid rgba(220,80,80,140); border-radius: 6px; }"
-            )
         w.setToolTip(tooltip)
         return w
 
     # -------------------------------------------------------------- loading
     def _reload(self, *_):
         self.cfg = get_config()
+        self.theme = resolve_theme(self.cfg)
+        self._apply_palette()
         self.cfg["filters"]["min_lapses"] = int(self.lapses_spin.value())
         self._loading = True
         try:
@@ -553,7 +569,7 @@ class LeechDoctorDialog(QDialog):
 
         meta = QLabel(f"{entry['deck']} · note {entry['nid']} · affects {entry['cards']} card(s)")
         meta.setTextFormat(Qt.TextFormat.RichText)
-        meta.setStyleSheet("color: gray;")
+        meta.setStyleSheet(f"color: {self.theme.ink_dim};")
         self.right_layout.addWidget(meta)
 
         # ---- stats ---------------------------------------------------------
@@ -574,7 +590,7 @@ class LeechDoctorDialog(QDialog):
         stats.addStretch(1)
         self.right_layout.addLayout(stats)
 
-        explainer = QLabel("<span style='color:gray'>lapses = forgotten after learning · "
+        explainer = QLabel(f"<span style='color:{self.theme.ink_dim}'>lapses = forgotten after learning · "
                            "reps = total reviews · fail % = lapses ÷ reps</span>")
         explainer.setTextFormat(Qt.TextFormat.RichText)
         self.right_layout.addWidget(explainer)
@@ -585,10 +601,12 @@ class LeechDoctorDialog(QDialog):
         banner.setWordWrap(True)
         banner.setTextFormat(Qt.TextFormat.RichText)
         bf = banner.font(); bf.setBold(True); banner.setFont(bf)
+        t = self.theme
         banner.setStyleSheet(
-            "#diagBanner { background-color: rgba(224,168,0,55); "
-            "border: 1px solid rgba(224,168,0,150); border-left: 5px solid rgba(232,168,0,230); "
-            f"border-radius: 6px; padding: 8px; color: {self._amber_text}; }}"
+            f"#diagBanner {{ background-color: {t.tint(t.accent, 0.16)}; "
+            f"border: 1px solid {t.tint(t.accent, 0.45)}; "
+            f"border-left: 5px solid {t.accent}; "
+            f"border-radius: 6px; padding: 8px; color: {t.ink}; }}"
         )
         self.right_layout.addWidget(banner)
 
@@ -606,7 +624,8 @@ class LeechDoctorDialog(QDialog):
                         "normalised to Anki-style HTML.")
         else:
             hint_txt = ("Fields show raw content (HTML, cloze and hints preserved). "
-                        "<span style='color:#0a0'>Green labels</span> were filled from the LLM proposal.")
+                        f"<span style='color:{self.theme.accent}'>Highlighted labels</span> "
+                        "were filled from the LLM proposal.")
         hint = QLabel(hint_txt)
         hint.setWordWrap(True)
         self.right_layout.addWidget(hint)
@@ -630,7 +649,7 @@ class LeechDoctorDialog(QDialog):
             if nm in front_names:
                 flags.append("front")
             if proposed:
-                flags.append("<span style='color:#0a0'>LLM proposed</span>")
+                flags.append(f"<span style='color:{self.theme.accent}'>LLM proposed</span>")
             lbl = QLabel(f"<b>{nm}</b>" + (f"  ({' · '.join(flags)})" if flags else ""))
             lbl.setTextFormat(Qt.TextFormat.RichText)
 

@@ -40,5 +40,19 @@ contains an `<img>` tag (default 220). Previews resolve filenames against Anki's
 as formatted text; only fields you actually modify are written back, and Qt's markup is normalised
 to Anki-style HTML. Prefer raw mode for cloze/image-heavy fields.
 
+## `ui.theme`
+
+Controls how Leech Doctor colours itself.
+
+- `mode` — `auto` (default) | `onigiri` | `anki` | `custom`.
+  - `auto` / `onigiri` read **Onigiri's live palette** from its config on disk, honouring Onigiri's
+    own light/dark choice (falling back to Anki's). This makes the window match the rest of your theme.
+  - `anki` uses Anki's Qt palette (tracks light/dark).
+  - `custom` uses the explicit colours below.
+- `dark` — `null` (auto) | `true` | `false`. Only used by `custom`.
+- `accent`, `bg`, `panel`, `fg`, `fg_dim`, `border` — `#rrggbb` overrides, used by `custom`.
+
+Use **Preferences → Theme → Show resolved theme** to see exactly which palette was picked and from where.
+
 ## `apply`
 `confirm_apply_over` (ask before batch-applying more than this), `keep_revert_log`.
